@@ -221,6 +221,8 @@ function createAnimeDiary() {
           episodes: m.episodes || 0,
           // Episodes out so far for an airing show.
           aired: next ? next - 1 : 0,
+          // FINISHED, RELEASING, NOT_YET_RELEASED, HIATUS, CANCELLED
+          airing: m.status || "",
           title: (m.title && (m.title.userPreferred || m.title.romaji || m.title.english)) || "?",
           cover: (m.coverImage && (m.coverImage.medium || m.coverImage.large)) || "",
         })
@@ -294,6 +296,8 @@ function createAnimeDiary() {
   .pill { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px; margin-top: 4px; }
   .pill.y { background: var(--yellow-bg); color: var(--yellow); }
   .pill.b { background: rgba(124,108,242,.15); color: #a99ff7; }
+  .pill.g { background: var(--green-bg); color: var(--green); }
+  .pill + .pill { margin-left: 4px; }
 
   /* Calendar */
   .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
@@ -434,15 +438,21 @@ function createAnimeDiary() {
     var cards = shown.map(function (x) {
       var e = x.e;
       var total = e.episodes ? e.episodes : "?";
-      var pill = "";
-      if (e.aired && !e.episodes || (e.aired && e.aired < e.episodes)) {
+      var pills = [];
+      if (e.aired && (!e.episodes || e.aired < e.episodes)) {
+        // Still airing: how far behind the latest episode you are.
         var behind = e.aired - e.progress;
-        pill = behind > 0
+        pills.push(behind > 0
           ? '<span class="pill y">отстал на ' + behind + ' ' + plural(behind, "серию", "серии", "серий") + '</span>'
-          : '<span class="pill b">догнал, ждём ' + (e.aired + 1) + '-ю</span>';
-      } else if (e.status === "PAUSED") {
-        pill = '<span class="pill y">на паузе</span>';
+          : '<span class="pill b">догнал, ждём ' + (e.aired + 1) + '-ю</span>');
+      } else if (e.airing === "FINISHED" && e.episodes > e.progress) {
+        // Fully out: nothing to wait for, just what's left.
+        var left = e.episodes - e.progress;
+        pills.push('<span class="pill g">вышло всё · ' + plural(left, "осталась", "осталось", "осталось") + ' ' +
+          left + ' ' + plural(left, "серия", "серии", "серий") + '</span>');
       }
+      if (e.status === "PAUSED") pills.push('<span class="pill y">на паузе</span>');
+      var pill = pills.length ? '<div>' + pills.join("") + '</div>' : "";
       return '<div class="card" data-open="' + e.mediaId + '">' +
         (e.cover ? '<img src="' + esc(e.cover) + '" loading="lazy">' : '<img>') +
         '<div><div class="t">' + esc(e.title) + '</div>' +
