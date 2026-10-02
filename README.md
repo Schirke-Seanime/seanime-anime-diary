@@ -6,9 +6,11 @@
 
 ---
 
-- **Unfinished** — shows you started, sorted by when you last watched them, with progress and how far behind an airing show you are.
-- **Calendar** — every day with the episodes you watched. Yellow: still watching, green: finished, gray: dropped.
+- **Unfinished** — shows you started, by when you last watched them or by how few episodes are left, with how far behind an airing show you are.
+- **Calendar** — every day with the episodes you watched (yellow: still watching, green: finished, gray: dropped), or the whole **year as a heatmap**.
+- **Day details and notes** — click a day to see what you watched and when, and write a note for it.
 - **Year in review** — episodes, hours, shows, streaks, busiest day, months and weekdays, top shows, genres and studios.
+- **English and Russian**, switchable on the page.
 
 The history comes from your AniList activity, so it covers everything you've watched since your activity began, not only since installing the plugin.
 
