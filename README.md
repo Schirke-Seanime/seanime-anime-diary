@@ -20,7 +20,7 @@ In Seanime, open **Extensions** → **Add extension**, paste the manifest URL an
 https://raw.githubusercontent.com/Schirke/seanime-anime-diary/main/src/manifest.json
 ```
 
-The **Дневник** page appears in the sidebar.
+The **Anime Diary** page appears in the sidebar.
 
 ## License
 

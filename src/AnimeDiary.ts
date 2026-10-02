@@ -50,7 +50,7 @@ function init() {
       slot: "screen",
       fullWidth: true,
       autoHeight: true,
-      sidebar: { label: "Дневник", icon: D.ICON },
+      sidebar: { label: "Anime Diary", icon: D.ICON },
     })
 
     const payload = ctx.state<any>(null)
@@ -80,7 +80,8 @@ function init() {
 // Everything the plugin does. Self-contained: compiled from its own source
 // by $shared, so it may only use globals ($anilist, $storage, ...).
 function createAnimeDiary() {
-  const CACHE_KEY = "diary-cache-v1"
+  // v2: media gained banner and large cover, so older caches are fetched again.
+  const CACHE_KEY = "diary-cache-v2"
   // AniList returns at most 50 activities per page; stop after this many pages
   // (5000 activities) on a first load.
   const MAX_PAGES = 100
@@ -96,7 +97,8 @@ function createAnimeDiary() {
           media {
             id episodes duration format genres
             title { userPreferred }
-            coverImage { medium color }
+            coverImage { medium large color }
+            bannerImage
             studios(isMain: true) { nodes { name } }
           }
         }
@@ -189,6 +191,8 @@ function createAnimeDiary() {
       id: m.id,
       title: (m.title && m.title.userPreferred) || "?",
       cover: (m.coverImage && m.coverImage.medium) || "",
+      coverLarge: (m.coverImage && (m.coverImage.large || m.coverImage.medium)) || "",
+      banner: m.bannerImage || "",
       color: (m.coverImage && m.coverImage.color) || "",
       episodes: m.episodes || 0,
       duration: m.duration || 0,
@@ -244,13 +248,23 @@ function createAnimeDiary() {
   <style>
   :root {
     --bg: #0b0b0d; --paper: #131317; --paper2: #1a1a20; --line: #26262e;
-    --text: #ececf1; --muted: #8a8a96; --brand: #7c6cf2;
+    --text: #ececf1; --muted: #8a8a96; --brand: #7c6cf2; --on-brand: #fff;
     --yellow: #e6b422; --yellow-bg: rgba(230,180,34,.13);
     --green: #3fbf6a; --green-bg: rgba(63,191,106,.13);
     --gray: #6b6b76; --gray-bg: rgba(120,120,130,.13);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: transparent; color: var(--text);
+  html { background: var(--bg); color-scheme: dark; }
+  /* Banner of the last watched anime, fading into the page */
+  .hero { position: absolute; top: 0; left: 0; right: 0; height: 440px; pointer-events: none;
+    background-size: cover; background-position: center 30%; opacity: .5;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.55) 45%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.55) 45%, transparent 100%); }
+  /* A portrait cover instead of a banner: blur it so it reads as colour */
+  .hero.cover { filter: blur(28px) saturate(1.4); transform: scale(1.15); opacity: .6; }
+  .wrap { position: relative; }
+  body { position: relative; overflow-x: hidden; }
+  html, body { margin: 0; color: var(--text);
     font: 14px/1.4 Inter, "Segoe UI", system-ui, sans-serif; }
   .wrap { padding: 8px 4px 32px; max-width: 1600px; margin: 0 auto; }
   h1 { font-size: 26px; margin: 0; font-weight: 700; letter-spacing: -.01em; }
@@ -261,10 +275,12 @@ function createAnimeDiary() {
   button { font: inherit; color: var(--text); background: var(--paper2); border: 1px solid var(--line);
     border-radius: 10px; padding: 7px 13px; cursor: pointer; }
   button:hover { border-color: #3a3a46; background: #202028; }
-  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+  button.primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); font-weight: 600; }
   button.primary:hover { filter: brightness(1.08); }
-  section { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 16px; }
-  .head { margin-bottom: 4px; }
+  section { background: rgba(19,19,23,.86); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 16px; }
+  .head { min-height: 170px; align-items: flex-end; padding-bottom: 6px; }
+  .head h1 { font-size: 34px; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+  .head .last { font-size: 13px; color: #d4d4dc; text-shadow: 0 1px 6px rgba(0,0,0,.8); margin-top: 2px; }
   .status { font-size: 12px; }
 
   /* Unfinished */
@@ -326,6 +342,7 @@ function createAnimeDiary() {
   </style>
   </head>
   <body>
+  <div class="hero" id="hero"></div>
   <div class="wrap" id="root"><div class="empty">Загружаю историю AniList…</div></div>
   <script>
   var DATA = null;
@@ -629,6 +646,43 @@ function createAnimeDiary() {
       body + '</div>';
   }
 
+  // ---------- theme ----------
+  function lastWatched() {
+    var acts = DATA.activities || [];
+    for (var i = 0; i < acts.length; i++) {
+      if (episodesOf(acts[i]) > 0) { var m = mediaOf(acts[i].mediaId); if (m) return m; }
+    }
+    return null;
+  }
+  function hexToRgb(h) {
+    if (!h || h.charAt(0) !== "#" || h.length !== 7) return null;
+    return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)];
+  }
+  // Banner (or blurred cover) and accent colour of the last watched anime.
+  // The colour is used only if it's neither too dark nor too washed out.
+  function applyTheme() {
+    var m = DATA && DATA.activities ? lastWatched() : null;
+    var hero = document.getElementById("hero");
+    var img = m && (m.banner || m.coverLarge || m.cover);
+    hero.style.backgroundImage = img ? 'url("' + String(img).replace(/"/g, "%22") + '")' : "none";
+    hero.className = "hero" + (m && !m.banner ? " cover" : "");
+
+    var css = document.documentElement.style;
+    var rgb = m && hexToRgb(m.color);
+    var brand = "#7c6cf2", onBrand = "#fff";
+    if (rgb) {
+      var lum = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+      var spread = Math.max(rgb[0], rgb[1], rgb[2]) - Math.min(rgb[0], rgb[1], rgb[2]);
+      if (lum > 0.22 && lum < 0.85 && spread > 40) {
+        brand = m.color;
+        onBrand = lum > 0.6 ? "#111" : "#fff";
+      }
+    }
+    css.setProperty("--brand", brand);
+    css.setProperty("--on-brand", onBrand);
+    return m;
+  }
+
   // ---------- shell ----------
   function render() {
     var root = document.getElementById("root");
@@ -642,12 +696,15 @@ function createAnimeDiary() {
     var years = DATA.activities ? yearsInData() : [];
     var reviewYear = years.length ? years[0] : new Date().getFullYear();
 
+    var last = applyTheme();
     if (REVIEW_YEAR !== null && DATA.activities) {
       root.innerHTML = renderReview();
       return;
     }
     root.innerHTML =
-      '<div class="row head"><h1>Дневник</h1><span class="spacer"></span>' +
+      '<div class="row head"><div><h1>Anime Diary</h1>' +
+        (last ? '<div class="last">Последнее: ' + esc(last.title) + '</div>' : '') +
+        '</div><span class="spacer"></span>' +
         '<span class="status muted">' + status + '</span>' +
         '<button data-act="refresh" title="Подтянуть новое из AniList">Обновить</button>' +
         '<button class="primary" data-act="review" data-year="' + reviewYear + '">🎉 Итоги ' + reviewYear + '</button>' +
