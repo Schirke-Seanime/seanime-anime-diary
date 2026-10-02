@@ -237,7 +237,7 @@ function createAnimeDiary() {
   // Page (runs inside the webview iframe)
   // ---------------------------------------------------------------------------
 
-  const PAGE_HTML = String.raw`<!DOCTYPE html>
+  const PAGE_HTML = `<!DOCTYPE html>
   <html lang="ru">
   <head>
   <meta charset="UTF-8">
