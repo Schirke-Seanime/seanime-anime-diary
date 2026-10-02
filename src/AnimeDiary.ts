@@ -59,7 +59,10 @@ function init() {
     const page = ctx.newWebview({
       slot: "screen",
       fullWidth: true,
-      autoHeight: true,
+      // A screen-tall frame that scrolls itself, rather than one sized to fit
+      // its content: in a frame with nothing to scroll, Chrome's middle-click
+      // autoscroll gets stuck and the wheel stops working until the next click.
+      height: "100vh",
       sidebar: { label: "Anime Diary", icon: D.ICON },
     })
 
@@ -320,7 +323,7 @@ function createAnimeDiary() {
     --gray: #6b6b76; --gray-bg: rgba(120,120,130,.13);
   }
   * { box-sizing: border-box; }
-  html { background: var(--bg); color-scheme: dark; }
+  html { background: var(--bg); color-scheme: dark; scrollbar-width: thin; scrollbar-color: #3a3a46 transparent; }
   /* Banner of the last watched anime, fading into the page */
   .hero { position: absolute; top: 0; left: 0; right: 0; height: 440px; pointer-events: none;
     background-size: cover; background-position: center 30%; opacity: .5;
