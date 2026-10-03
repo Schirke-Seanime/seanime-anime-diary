@@ -19,7 +19,7 @@ The history comes from your AniList activity, so it covers everything you've wat
 In Seanime, open **Extensions** → **Add extension**, paste the manifest URL and allow the requested permissions:
 
 ```
-https://raw.githubusercontent.com/Schirke/seanime-anime-diary/main/src/manifest.json
+https://raw.githubusercontent.com/Schirke-Seanime/seanime-anime-diary/main/src/manifest.json
 ```
 
 The **Anime Diary** page appears in the sidebar.

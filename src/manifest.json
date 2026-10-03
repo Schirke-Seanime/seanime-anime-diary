@@ -1,16 +1,16 @@
 {
   "id": "anime-diary",
   "name": "Anime Diary",
-  "version": "2.0.1",
-  "manifestURI": "https://raw.githubusercontent.com/Schirke/seanime-anime-diary/main/src/manifest.json",
+  "version": "2.0.2",
+  "manifestURI": "https://raw.githubusercontent.com/Schirke-Seanime/seanime-anime-diary/main/src/manifest.json",
   "language": "typescript",
   "type": "plugin",
   "description": "Watch diary: calendar and year heatmap of watched episodes, unfinished shows, day notes and a year in review, from your AniList history. English and Russian.",
   "author": "Schirke",
-  "icon": "https://raw.githubusercontent.com/Schirke/seanime-anime-diary/main/src/icon.png",
-  "website": "https://github.com/Schirke/seanime-anime-diary",
+  "icon": "https://raw.githubusercontent.com/Schirke-Seanime/seanime-anime-diary/main/src/icon.png",
+  "website": "https://github.com/Schirke-Seanime/seanime-anime-diary",
   "lang": "ru",
-  "payloadURI": "https://raw.githubusercontent.com/Schirke/seanime-anime-diary/main/src/AnimeDiary.ts",
+  "payloadURI": "https://raw.githubusercontent.com/Schirke-Seanime/seanime-anime-diary/main/src/AnimeDiary.ts",
   "plugin": {
     "version": "1",
     "permissions": {
